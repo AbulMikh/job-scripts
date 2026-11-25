@@ -32,24 +32,16 @@ from jobcommon import (WORK, age_days, fetch_json, load_history, load_json, norm
 GH, ASHBY, LEVER = "gh", "ashby", "lever"
 
 # Организации с ATS. Для каждой — несколько вариантов (ATS, slug): берётся первый, что ответил списком.
-# Slug-и, отмеченные «?», не проверены; если ни один не сработал, источник уходит в «НЕ ПОКРЫТО».
+# Slug-и проверены первым боевым запуском 25.11.2026; организации без публичного ATS перенесены в NOT_IN_SCRIPT.
 ATS_SOURCES = [
     # evals и AI safety
-    ("METR", "evals", [(ASHBY, "metr"), (GH, "metr"), (LEVER, "metr")]),
-    ("Epoch AI", "evals", [(ASHBY, "epoch"), (ASHBY, "epochai"), (GH, "epochai"), (LEVER, "epochai")]),
-    ("Apollo Research", "evals", [(ASHBY, "apollo-research"), (ASHBY, "apolloresearch"), (GH, "apolloresearch")]),
-    ("FAR.AI", "evals", [(ASHBY, "far-ai"), (ASHBY, "farai"), (GH, "farai"), (LEVER, "far-ai")]),
-    ("Gray Swan", "evals", [(ASHBY, "grayswan"), (ASHBY, "gray-swan"), (GH, "grayswan")]),
-    ("LMArena", "evals", [(ASHBY, "lmarena"), (GH, "lmarena")]),
-    ("MLCommons", "evals", [(ASHBY, "mlcommons"), (GH, "mlcommons"), (LEVER, "mlcommons")]),
+    ("METR", "evals", [(LEVER, "metr")]),
+    ("FAR.AI", "evals", [(LEVER, "far-ai")]),
     ("Redwood Research", "evals", [(ASHBY, "redwoodresearch"), (ASHBY, "redwood-research"), (GH, "redwoodresearch")]),
-    ("Center for AI Safety", "evals", [(ASHBY, "cais"), (ASHBY, "safe-ai"), (GH, "centerforaisafety")]),
     # ИИ-лаборатории: операционные и проектные роли, Европа, Северная Америка, Япония
     ("Anthropic", "labs", [(GH, "anthropic"), (ASHBY, "anthropic")]),
     ("OpenAI", "labs", [(ASHBY, "openai"), (GH, "openai")]),
     ("Cohere", "labs", [(ASHBY, "cohere"), (GH, "cohere")]),
-    ("Hugging Face", "labs", [(ASHBY, "huggingface"), (GH, "huggingface"), (LEVER, "huggingface")]),
-    ("Sakana AI", "labs", [(ASHBY, "sakana"), (ASHBY, "sakana-ai"), (GH, "sakanaai")]),
     # компании ИИ-агентов поддержки и автоматизации: роли внедрения у клиентов
     ("Intercom", "enable", [(GH, "intercom"), (ASHBY, "intercom")]),
     ("Sierra", "enable", [(ASHBY, "sierra"), (GH, "sierra")]),
@@ -61,6 +53,14 @@ ATS_SOURCES = [
 
 # Источники без публичного ATS-API: рутина проверяет их сама (WebFetch / WebSearch).
 NOT_IN_SCRIPT = [
+    "Epoch AI (https://epoch.ai/careers) — публичного ATS-API нет, проверено 25.11.2026",
+    "Apollo Research (https://www.apolloresearch.ai/careers) — публичного ATS-API нет, проверено 25.11.2026",
+    "Gray Swan (https://www.grayswan.ai/careers) — публичного ATS-API нет, проверено 25.11.2026",
+    "LMArena (https://lmarena.ai/careers) — публичного ATS-API нет, проверено 25.11.2026",
+    "MLCommons (https://mlcommons.org/careers) — публичного ATS-API нет, проверено 25.11.2026",
+    "Center for AI Safety (https://safe.ai/careers) — публичного ATS-API нет, проверено 25.11.2026",
+    "Hugging Face (https://apply.workable.com/huggingface) — публичного ATS-API нет, проверено 25.11.2026",
+    "Sakana AI (https://sakana.ai/careers) — публичного ATS-API нет, проверено 25.11.2026",
     "80,000 Hours (https://jobs.80000hours.org — фильтр AI safety + operations)",
     "Signpost / IRC (https://www.signpostai.org и rescue.org/careers)",
     "Data Friendly Space (https://datafriendlyspace.org/careers)",
