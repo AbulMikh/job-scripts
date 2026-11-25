@@ -100,6 +100,11 @@ OTHER_WORDS = (r"united states|\busa?\b|\bus\b|canada|united kingdom|\buk\b|indi
                r"new york|san francisco|london|toronto|bangalore|tel aviv")
 
 
+RELOC_WORDS = (EU_WORDS + r"|united states|\busa?\b|\bus\b|canada|united kingdom|\buk\b|japan|tokyo|osaka|"
+               r"new york|san francisco|seattle|boston|toronto|montreal|vancouver|london|dublin|zurich|paris|berlin|"
+               r"amsterdam|lisbon|madrid|barcelona")
+
+
 def classify(loc, remote_flag=None, workplace=""):
     l = (loc or "").lower()
     remote = bool(remote_flag) or "remote" in l or "anywhere" in l or str(workplace).lower() == "remote"
@@ -273,8 +278,12 @@ def collect(args):
                 continue
             r["fmt"] = classify(r["loc"], r.get("remote"), r.get("workplace", ""))
             if r["fmt"] in ("office", "hybrid") and group not in ("fr", "mistral"):
-                c["office"] += 1
-                continue
+                # --reloc: офис/гибрид в Европе, Северной Америке и Японии оставляем для сильных совпадений по роли
+                if args.reloc and CORE.search(r["title"].lower()) and re.search(RELOC_WORDS, (r["loc"] or "").lower()):
+                    r["fmt"] = "reloc"
+                else:
+                    c["office"] += 1
+                    continue
             d = parse_date(r.get("published"))
             r["age"] = age_days(d)
             r["pub"] = d.date().isoformat() if d else "?"
@@ -298,9 +307,10 @@ def collect(args):
     save_json("tech_candidates.json", cands)
 
     print(f"История загружена: {'да' if have_hist else 'НЕТ — возможны повторы'}; кандидатов: {len(cands)}")
-    order = {"remote-EU": 0, "remote-?": 1, "hybrid": 2, "office": 3, "remote-other": 4}
+    order = {"remote-EU": 0, "remote-?": 1, "hybrid": 2, "office": 3, "remote-other": 4, "reloc": 5}
     cands.sort(key=lambda r: (order.get(r["fmt"], 9), r["senior"], r["company"], r.get("age") or 0))
-    main = [r for r in cands if r["fmt"] != "remote-other"]
+    main = [r for r in cands if r["fmt"] not in ("remote-other", "reloc")]
+    reloc = [r for r in cands if r["fmt"] == "reloc"]
     other = [r for r in cands if r["fmt"] == "remote-other"]
     core_other = [r for r in other if CORE.search(r["title"].lower())]
 
@@ -310,6 +320,10 @@ def collect(args):
     print("\nКАНДИДАТЫ (ключ | компания | название | формат | локация | опубл. | ⬆=senior)")
     for r in main:
         print(line(r))
+    if args.reloc:
+        print(f"\nОФИС/ГИБРИД В ЕВРОПЕ, СЕВЕРНОЙ АМЕРИКЕ, ЯПОНИИ — кандидаты на релокацию, проверь поддержку переезда ({len(reloc)}):")
+        for r in reloc:
+            print(line(r))
     print(f"\nУДАЛЁННО ТОЛЬКО В ДРУГИХ СТРАНАХ — сильные совпадения по роли ({len(core_other)} из {len(other)}):")
     for r in core_other:
         print(line(r))
@@ -324,7 +338,7 @@ def collect(args):
 def describe(args):
     cands = {r["key"]: r for r in load_json("tech_candidates.json")}
     pats = [r"remote[^.\n]{0,80}", r"(based in|located in|reside|residing|work from|hiring in)[^.\n]{0,80}",
-            r"(countries|eligib|authori[sz]ation|visa|right to work|time ?zone|\bcet\b|\best\b|\bpst\b)[^.\n]{0,60}",
+            r"(countries|eligib|authori[sz]ation|visa|sponsor|relocat|right to work|time ?zone|\bcet\b|\best\b|\bpst\b)[^.\n]{0,60}",
             r"\d+\+? ?(years|yrs)", r"(french|arabic|russian|german|spanish|fluent|native speaker)[^.\n]{0,40}",
             r"(contractor|full[- ]time|part[- ]time|\beor\b|freelance|fixed[- ]term)[^.\n]{0,40}",
             r"(requirements|qualifications|what you.ll bring|you have|you bring)[^\n]{0,160}",
@@ -372,6 +386,7 @@ def main():
     c.add_argument("--history", help="текстовый файл с историей (ссылки и ID показанных вакансий)")
     c.add_argument("--weekday", type=int, default=0, help="день недели по Подгорице, 1=пн … 5=пт")
     c.add_argument("--max-age", type=int, default=45, help="отбросить вакансии старше N дней")
+    c.add_argument("--reloc", action="store_true", help="оставлять офис/гибрид в Европе, Сев. Америке и Японии для сильных совпадений (релокация)")
     c.set_defaults(func=collect)
     d = sub.add_parser("describe")
     d.add_argument("keys", nargs="+")
