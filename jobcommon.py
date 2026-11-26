@@ -156,13 +156,18 @@ def parse_date(s):
         except Exception:
             continue
     try:
-        return datetime.fromisoformat(s.replace("Z", "+00:00"))
+        d = datetime.fromisoformat(s.replace("Z", "+00:00"))
+        return d if d.tzinfo else d.replace(tzinfo=timezone.utc)
     except Exception:
         return None
 
 
 def age_days(d):
-    return None if d is None else (now_utc() - d).days
+    if d is None:
+        return None
+    if d.tzinfo is None:  # дата без часового пояса считается UTC
+        d = d.replace(tzinfo=timezone.utc)
+    return (now_utc() - d).days
 
 
 def snippets(text, patterns, width=220, limit=8):
